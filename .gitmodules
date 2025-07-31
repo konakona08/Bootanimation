@@ -1,6 +1,6 @@
 [submodule "deps/fdk-aac"]
 	path = deps/fdk-aac
 	url = https://github.com/mstorsjo/fdk-aac.git
-[submodule "deps/openh264"]
-	path = deps/openh264
-	url = https://github.com/cisco/openh264.git
+[submodule "deps/x264"]
+	path = deps/x264
+	url = https://code.videolan.org/videolan/x264.git
