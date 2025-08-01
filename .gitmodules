@@ -10,3 +10,6 @@
 [submodule "deps/libzip"]
 	path = deps/libzip
 	url = https://github.com/kiyolee/libzip-win-build.git
+[submodule "deps/zlib-win-build"]
+	path = deps/zlib-win-build
+	url = https://github.com/kiyolee/zlib-win-build.git
