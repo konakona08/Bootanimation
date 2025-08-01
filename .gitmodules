@@ -4,3 +4,6 @@
 [submodule "deps/l-smash"]
 	path = deps/l-smash
 	url = https://github.com/l-smash/l-smash.git
+[submodule "deps/x264"]
+	path = deps/x264
+	url = https://github.com/konakona08/x264cmake.git
