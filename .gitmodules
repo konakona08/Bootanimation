@@ -7,3 +7,6 @@
 [submodule "deps/x264"]
 	path = deps/x264
 	url = https://github.com/konakona08/x264cmake.git
+[submodule "deps/libzip"]
+	path = deps/libzip
+	url = https://github.com/kiyolee/libzip-win-build.git
