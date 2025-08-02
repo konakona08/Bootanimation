@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\deps\miniaudio\extras\stb_vorbis.c" />
+    <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Video.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{cafc5d10-a9e3-4819-a945-bd97a565c125}</ProjectGuid>
+    <RootNamespace>bootanimation</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\deps\x264;$(ProjectDir)..\deps\l-smash;$(ProjectDir)..\deps\fdk-aac\build\out\include\fdk-aac;$(ProjectDir)..\deps\fdk-aac\libAACenc\src;$(ProjectDir)..\deps\libzip\lib;$(ProjectDir)..\deps\libzip\win32;$(IMG_DIR)\include;$(ProjectDir)..\deps\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\deps\x264\build\$(Configuration);$(ProjectDir)..\deps\l-smash\$(Platform)\$(Configuration);$(ProjectDir)..\deps\fdk-aac\build\out\lib;$(ProjectDir)..\deps\libzip\build-VS2022\$(Platform)\$(Configuration);$(IMG_DIR)\lib;$(ProjectDir)..\deps\miniaudio\build\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libx264.lib;fdk-aac.lib;liblsmash.lib;libzip.lib;CORE_RL_MagickWand_.lib;miniaudio.lib;miniaudio_channel_combiner_node.lib;miniaudio_channel_separator_node.lib;miniaudio_libvorbis.lib;CORE_RL_MagickCore_.lib;CORE_RL_Magick++_.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)copydll.cmd $(SolutionDir) $(SolutionDir)$(Platform)\$(Configuration) $(Platform) $(Configuration) "$(IMG_DIR)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\deps\x264;$(ProjectDir)..\deps\l-smash;$(ProjectDir)..\deps\fdk-aac\build\out\include\fdk-aac;$(ProjectDir)..\deps\fdk-aac\libAACenc\src;$(ProjectDir)..\deps\libzip\lib;$(ProjectDir)..\deps\libzip\win32;$(IMG_DIR)\include;$(ProjectDir)..\deps\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\deps\x264\build\$(Configuration);$(ProjectDir)..\deps\l-smash\$(Platform)\$(Configuration);$(ProjectDir)..\deps\fdk-aac\build\out\lib;$(ProjectDir)..\deps\libzip\build-VS2022\$(Platform)\$(Configuration);$(IMG_DIR)\lib;$(ProjectDir)..\deps\miniaudio\build\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libx264.lib;fdk-aac.lib;liblsmash.lib;libzip.lib;CORE_RL_MagickWand_.lib;miniaudio.lib;miniaudio_channel_combiner_node.lib;miniaudio_channel_separator_node.lib;miniaudio_libvorbis.lib;CORE_RL_MagickCore_.lib;CORE_RL_Magick++_.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)copydll.cmd $(SolutionDir) $(SolutionDir)$(Platform)\$(Configuration) $(Platform) $(Configuration) "$(IMG_DIR)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\deps\x264;$(ProjectDir)..\deps\l-smash;$(ProjectDir)..\deps\fdk-aac\build\out\include\fdk-aac;$(ProjectDir)..\deps\fdk-aac\libAACenc\src;$(ProjectDir)..\deps\libzip\lib;$(ProjectDir)..\deps\libzip\win32;$(IMG_DIR)\include;$(ProjectDir)..\deps\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\deps\x264\build\$(Configuration);$(ProjectDir)..\deps\l-smash\$(Platform)\$(Configuration);$(ProjectDir)..\deps\fdk-aac\build\out\lib;$(ProjectDir)..\deps\libzip\build-VS2022\$(Platform)\$(Configuration);$(IMG_DIR)\lib;$(ProjectDir)..\deps\miniaudio\build\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libx264.lib;fdk-aac.lib;liblsmash.lib;libzip.lib;CORE_RL_MagickWand_.lib;miniaudio.lib;miniaudio_channel_combiner_node.lib;miniaudio_channel_separator_node.lib;miniaudio_libvorbis.lib;CORE_RL_MagickCore_.lib;CORE_RL_Magick++_.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)copydll.cmd $(SolutionDir) $(SolutionDir)$(Platform)\$(Configuration) $(Platform) $(Configuration) "$(IMG_DIR)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\deps\x264;$(ProjectDir)..\deps\l-smash;$(ProjectDir)..\deps\fdk-aac\build\out\include\fdk-aac;$(ProjectDir)..\deps\fdk-aac\libAACenc\src;$(ProjectDir)..\deps\libzip\lib;$(ProjectDir)..\deps\libzip\win32;$(IMG_DIR)\include;$(ProjectDir)..\deps\miniaudio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\deps\x264\build\$(Configuration);$(ProjectDir)..\deps\l-smash\$(Platform)\$(Configuration);$(ProjectDir)..\deps\fdk-aac\build\out\lib;$(ProjectDir)..\deps\libzip\build-VS2022\$(Platform)\$(Configuration);$(IMG_DIR)\lib;$(ProjectDir)..\deps\miniaudio\build\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libx264.lib;fdk-aac.lib;liblsmash.lib;libzip.lib;CORE_RL_MagickWand_.lib;miniaudio.lib;miniaudio_channel_combiner_node.lib;miniaudio_channel_separator_node.lib;miniaudio_libvorbis.lib;CORE_RL_MagickCore_.lib;CORE_RL_Magick++_.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)copydll.cmd $(SolutionDir) $(SolutionDir)$(Platform)\$(Configuration) $(Platform) $(Configuration) "$(IMG_DIR)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="bootanimation.props" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
