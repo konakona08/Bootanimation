@@ -43,6 +43,10 @@ The project depends on a copy of ImageMagick for building. The variant used is 8
 
 4. Play till completion
 
+5. Samsung/Quram QMG decode support (will implement later under Dynarmic emulation)
+
+6. Pantech SKY LZ frames format (will implement later)
+
 # License(s)
 
 At this moment the project does not have a license. I planned to license it under Apache-2.0 but x264 and FDK-AAC licenses have incompatibilities with Apache-2.0.
