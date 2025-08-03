@@ -39,13 +39,11 @@ The project depends on a copy of ImageMagick for building. The variant used is 8
 
 2. Clock and progress in bootanimation (and probably will never be done)
 
-3. Pause frames (don't have an example to implement)
+3. Play till completion
 
-4. Play till completion
+4. Samsung/Quram QMG decode support (will implement later under Dynarmic emulation)
 
-5. Samsung/Quram QMG decode support (will implement later under Dynarmic emulation)
-
-6. Pantech SKY LZ frames format (will implement later)
+5. Pantech SKY LZ frames format (will implement later)
 
 # License(s)
 
