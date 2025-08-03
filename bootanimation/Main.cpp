@@ -484,7 +484,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
     //find last frame in the prefix
     for (const auto& zipEntry : zipEntries) {
         if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length()) {
-            if (zipEntry > last_frame) {
+            if (zipEntry > last_frame && !(zipEntry.find(".txt") != std::string::npos)) {
                 last_frame = zipEntry;
             }
         }
