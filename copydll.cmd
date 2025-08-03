@@ -8,6 +8,9 @@ if "%proj_arch%" equ "x86" (set libzip_proj_arch=Win32) else (set libzip_proj_ar
 
 set libzip_proj_arch
 
+rem Copy FDK-AAC
+copy /b %src_path%deps\fdk-aac\build\out\bin\*.dll %proj_build_path%
+
 rem Copy LIBZIP and ZLIB
 copy /b %src_path%deps\libzip\build-VS2022\%libzip_proj_arch%\%proj_type%\libzip.dll %proj_build_path%
 copy /b %src_path%deps\zlib-win-build\build-VS2022\%libzip_proj_arch%\%proj_type%\libz.dll %proj_build_path%

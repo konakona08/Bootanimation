@@ -6,9 +6,9 @@
 
 2. c:\msys64\msys2_shell -> cd <PATH TO PROJECT>/deps/x264
 
-3. ./configure --disable-avs --disable-swscale --disable-lavf --disable-ffms --disable-gpac --disable-asm --disable-opencl --disable-interlaced --enable-shared --enable-pic --disable-cli --bit-depth=8
+3. ./configure --disable-avs --disable-swscale --disable-lavf --disable-ffms --disable-gpac --disable-asm --disable-opencl --disable-interlaced --enable-shared --enable-pic --disable-cli --disable-thread --bit-depth=8
 
-4. cd <PATH TO PROJECT>\deps\x264 -> md build -< cd build
+4. cd <PATH TO PROJECT>\deps\x264 -> md build -> cd build
 
 5. cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=./build -DBUILD_SHARED_LIBS=ON ..
 
@@ -38,6 +38,8 @@
 
 1. Clone ogg and vorbis into <PATH TO PROJECT>\deps\miniaudio\external
 
-2. cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=./build -DBUILD_SHARED_LIBS=ON ..
+2. cd <PATH TO PROJECT>\deps\miniaudio -> <DRIVE TO PROJECT> -> md build -> cd build
 
-3. cmake --build . --config Debug/Release
+3. cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=./build -DBUILD_SHARED_LIBS=ON ..
+
+4. cmake --build . --config Debug/Release

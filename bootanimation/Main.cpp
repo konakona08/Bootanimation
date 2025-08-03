@@ -472,14 +472,29 @@ void PasteImage(uint8_t* pRGB, uint8_t* pInRGB, int x, int y, int w, int h)
 	}
 }
 
-void ParseEntry(std::string prefix, Video* video, RGBColor bkg)
+void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
 {
     std::vector<Position> pos;
     RGBColor dyn_colors[4];
-	bool hasTrim = false;
+    bool hasTrim = false;
     int curr_frame = 0;
+
+    std::string last_frame;
+
+    //find last frame in the prefix
     for (const auto& zipEntry : zipEntries) {
         if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length()) {
+            if (zipEntry > last_frame) {
+                last_frame = zipEntry;
+            }
+        }
+    }
+
+    for (const auto& zipEntry : zipEntries) {
+        if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length()) {
+
+            int times = 1 + ((zipEntry == last_frame) ? pause : 0);
+
             uint8_t* file_data = NULL;
             zip_uint64_t file_size = 0;
             zip_stat_t st;
@@ -497,7 +512,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg)
             zip_fclose(f);
 
             //if file is trim.txt, parse it
-			if (zipEntry.find("trim.txt") != std::string::npos)
+            if (zipEntry.find("trim.txt") != std::string::npos)
             {
                 char const* s = (char*)file_data;
                 for (;;) {
@@ -514,127 +529,130 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg)
                     pos.push_back(entry);
                     s = ++endl;
                 }
-				hasTrim = true;
+                hasTrim = true;
             }
             else
             {
-                uint8_t* a = video->GetFrameData();
-                FillImage(a, bkg, descTxt.hdr.width, descTxt.hdr.height);
-                try {
-                    uint8_t* dec_buffer = NULL;
-                    int dec_buffer_size = 0;
-                    uint8_t* dec_buffer_dcol = NULL;
-                    int dec_buffer_dcol_size = 0;
-                    Magick::Blob blob(file_data, file_size);
-                    Magick::Image image;
-                    int rgb_multi = ((descTxt.dyncol_enabled == true) ? 4 : 3);
-                    int rgb_buffer_size = 0;
-                    image.read(blob);
+                for (int i = 0; i < times; i++)
+                {
+                    uint8_t* a = video->GetFrameData();
+                    FillImage(a, bkg, descTxt.hdr.width, descTxt.hdr.height);
+                    try {
+                        uint8_t* dec_buffer = NULL;
+                        int dec_buffer_size = 0;
+                        uint8_t* dec_buffer_dcol = NULL;
+                        int dec_buffer_dcol_size = 0;
+                        Magick::Blob blob(file_data, file_size);
+                        Magick::Image image;
+                        int rgb_multi = ((descTxt.dyncol_enabled == true) ? 4 : 3);
+                        int rgb_buffer_size = 0;
+                        image.read(blob);
 
-                    printf("open frame of %s, size=%d, width=%d, height=%d\n",
-                        zipEntry.c_str(), file_size, image.columns(), image.rows());
+                        printf("open frame of %s, size=%d, width=%d, height=%d\n",
+                            zipEntry.c_str(), file_size, image.columns(), image.rows());
 
-                    //alloc
+                        //alloc
 
-                    if (descTxt.dyncol_enabled == true)
-                    {
-                        dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
-                        dec_buffer_size = image.columns() * image.rows() * 4;
-                        dec_buffer_dcol = new uint8_t[image.columns() * image.rows() * 3];
-                        dec_buffer_dcol_size = image.columns() * image.rows() * 3;
-                        const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
-                        for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
-                            for (unsigned int i1 = 0; i1 < 2; i1++) {
-                                dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
-                                dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
-                                dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
-                                dec_buffer[rgb_buffer_size + 3] = pixelsArr[i + 3] * 255 / QuantumRange;
+                        if (descTxt.dyncol_enabled == true)
+                        {
+                            dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
+                            dec_buffer_size = image.columns() * image.rows() * 4;
+                            dec_buffer_dcol = new uint8_t[image.columns() * image.rows() * 3];
+                            dec_buffer_dcol_size = image.columns() * image.rows() * 3;
+                            const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
+                            for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
+                                for (unsigned int i1 = 0; i1 < 2; i1++) {
+                                    dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
+                                    dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
+                                    dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
+                                    dec_buffer[rgb_buffer_size + 3] = pixelsArr[i + 3] * 255 / QuantumRange;
+                                }
+                                rgb_buffer_size += 4;
                             }
-                            rgb_buffer_size += 4;
-                        }
 
-					    memset(dec_buffer_dcol, 0, dec_buffer_dcol_size);
+                            memset(dec_buffer_dcol, 0, dec_buffer_dcol_size);
 
-                        //calc dyn percentage
-						//if part is before dyncol or is dyncol but before start frame, use start colors
-						//if part is after dyncol or is dyncol but after end frame, use end colors
-                        //else calc
-                        if (prefix.substr(0, descTxt.dyncol_part_name.length()) == descTxt.dyncol_part_name)
-                        {
-                            if (curr_frame > descTxt.dyncol_start && curr_frame <= descTxt.dyncol_end)
-								dyn_percentage = (float)(curr_frame - descTxt.dyncol_start) / (descTxt.dyncol_end - descTxt.dyncol_start) * 100;
-                        }
-
-						dyn_colors[0] = mixColors(descTxt.dyncol_start_colors[0], descTxt.dyncol_end_colors[0], dyn_percentage);
-						dyn_colors[1] = mixColors(descTxt.dyncol_start_colors[1], descTxt.dyncol_end_colors[1], dyn_percentage);
-						dyn_colors[2] = mixColors(descTxt.dyncol_start_colors[2], descTxt.dyncol_end_colors[2], dyn_percentage);
-                        dyn_colors[3] = mixColors(descTxt.dyncol_start_colors[3], descTxt.dyncol_end_colors[3], dyn_percentage);
-
-                        if (curr_frame == descTxt.dyncol_end)
-                        {
-                            for (int m = 0; m < 4; m++)
+                            //calc dyn percentage
+                            //if part is before dyncol or is dyncol but before start frame, use start colors
+                            //if part is after dyncol or is dyncol but after end frame, use end colors
+                            //else calc
+                            if (prefix.substr(0, descTxt.dyncol_part_name.length()) == descTxt.dyncol_part_name)
                             {
-                                printf("#%02x%02x%02x ", dyn_colors[m].R, dyn_colors[m].G, dyn_colors[m].B);
+                                if (curr_frame > descTxt.dyncol_start && curr_frame <= descTxt.dyncol_end)
+                                    dyn_percentage = (float)(curr_frame - descTxt.dyncol_start) / (descTxt.dyncol_end - descTxt.dyncol_start) * 100;
                             }
-                            printf("in full\n");
-                        }
 
-						//apply dynamic coloring
-                        ApplyDynamic(dec_buffer, dec_buffer_dcol, dyn_colors[0], dyn_colors[1], dyn_colors[2], dyn_colors[3],
-                                     image.columns(), image.rows());
+                            dyn_colors[0] = mixColors(descTxt.dyncol_start_colors[0], descTxt.dyncol_end_colors[0], dyn_percentage);
+                            dyn_colors[1] = mixColors(descTxt.dyncol_start_colors[1], descTxt.dyncol_end_colors[1], dyn_percentage);
+                            dyn_colors[2] = mixColors(descTxt.dyncol_start_colors[2], descTxt.dyncol_end_colors[2], dyn_percentage);
+                            dyn_colors[3] = mixColors(descTxt.dyncol_start_colors[3], descTxt.dyncol_end_colors[3], dyn_percentage);
 
-                        if (hasTrim)
-                        {
-                            PasteImage(a, dec_buffer_dcol, pos[curr_frame].x, pos[curr_frame].y, pos[curr_frame].w, pos[curr_frame].h);
+                            if (curr_frame == descTxt.dyncol_end)
+                            {
+                                for (int m = 0; m < 4; m++)
+                                {
+                                    printf("#%02x%02x%02x ", dyn_colors[m].R, dyn_colors[m].G, dyn_colors[m].B);
+                                }
+                                printf("in full\n");
+                            }
+
+                            //apply dynamic coloring
+                            ApplyDynamic(dec_buffer, dec_buffer_dcol, dyn_colors[0], dyn_colors[1], dyn_colors[2], dyn_colors[3],
+                                image.columns(), image.rows());
+
+                            if (hasTrim)
+                            {
+                                PasteImage(a, dec_buffer_dcol, pos[curr_frame].x, pos[curr_frame].y, pos[curr_frame].w, pos[curr_frame].h);
+                            }
+                            else
+                            {
+                                PasteImage(a, dec_buffer_dcol, 0, 0, image.columns(), image.rows());
+                            }
+                            delete[] dec_buffer_dcol;
+                            delete[] dec_buffer;
                         }
                         else
                         {
-                            PasteImage(a, dec_buffer_dcol, 0, 0, image.columns(), image.rows());
-                        }
-                        delete[] dec_buffer_dcol;
-                        delete[] dec_buffer;
-                    }
-                    else
-                    {
-                        dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
-                        dec_buffer_size = image.columns() * image.rows() * 4;
-                        if (image.type() == PaletteType || image.type() == PaletteAlphaType
-                            || image.type() == GrayscaleAlphaType || image.type() == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
-                            rgb_multi = 4;
-                        //get data
-                        const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
-                        for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
-                            for (unsigned int i1 = 0; i1 < 2; i1++) {
-                                dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
-                                dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
-                                dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
+                            dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
+                            dec_buffer_size = image.columns() * image.rows() * 4;
+                            if (image.type() == PaletteType || image.type() == PaletteAlphaType
+                                || image.type() == GrayscaleAlphaType || image.type() == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
+                                rgb_multi = 4;
+                            //get data
+                            const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
+                            for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
+                                for (unsigned int i1 = 0; i1 < 2; i1++) {
+                                    dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
+                                    dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
+                                    dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
+                                }
+                                rgb_buffer_size += 3;
                             }
-                            rgb_buffer_size += 3;
+
+                            if (hasTrim)
+                            {
+                                PasteImage(a, dec_buffer, pos[curr_frame].x, pos[curr_frame].y, pos[curr_frame].w, pos[curr_frame].h);
+                            }
+                            else
+                            {
+                                PasteImage(a, dec_buffer, 0, 0, image.columns(), image.rows());
+                            }
+                            delete[] dec_buffer;
                         }
 
-                        if (hasTrim)
+                        if (video->AddFrame() == false)
                         {
-                            PasteImage(a, dec_buffer, pos[curr_frame].x, pos[curr_frame].y, pos[curr_frame].w, pos[curr_frame].h);
+                            printf("Failed to add frame to video\n");
                         }
                         else
                         {
-                            PasteImage(a, dec_buffer, 0, 0, image.columns(), image.rows());
+                            printf("Frame added to video: %s\n", zipEntry.c_str());
                         }
-                        delete[] dec_buffer;
-                    }
 
-                    if (video->AddFrame() == false)
-                    {
-                        printf("Failed to add frame to video\n");
                     }
-                    else
-                    {
-                        printf("Frame added to video: %s\n", zipEntry.c_str());
+                    catch (Exception& e) {
+                        std::cerr << "Error processing image: " << e.what() << std::endl;
                     }
-
-                }
-                catch (Exception& e) {
-                    std::cerr << "Error processing image: " << e.what() << std::endl;
                 }
                 curr_frame++;
             }
@@ -646,22 +664,22 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg)
 void ParseAnimation()
 {
     uint8_t* rgb_buffer = NULL;
-	int rgb_buffer_size = 0;
+    int rgb_buffer_size = 0;
     int16_t* audioData = audio_buffer;
     int samples = audio_samples;
     int samples_per_frame = 1024;
     uint32_t anim_total_ms = 0;
     uint32_t anim_curr_ms = 0;
 
-	rgb_buffer = new uint8_t[descTxt.hdr.width * descTxt.hdr.height * 3];
-	rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 3;
+    rgb_buffer = new uint8_t[descTxt.hdr.width * descTxt.hdr.height * 3];
+    rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 3;
 
     Video* video = new Video();
-	video->SetParams(descTxt.hdr.width, descTxt.hdr.height, descTxt.hdr.fps);
+    video->SetParams(descTxt.hdr.width, descTxt.hdr.height, descTxt.hdr.fps);
     if (audio_present) {
         video->SetParamsAudio(audio_sample_rate, samples_per_frame, audio_channels);
-	}
-	video->Open(outFileName);
+    }
+    video->Open(outFileName);
     video->Start();
     video->CreateVideoTrack();
     if (audio_present) {
@@ -676,43 +694,43 @@ void ParseAnimation()
                 //check if ending in txt, skip if so
                 if (zipEntry.substr(zipEntry.length() - 4) == ".txt") {
                     continue; // skip desc.txt files
-				}
-				descTxt.entries[entry].duration_ms += FpsToMs(descTxt.hdr.fps);
-				anim_total_ms += FpsToMs(descTxt.hdr.fps) * (descTxt.entries[entry].count > 0 ? descTxt.entries[entry].count : 1);
+                }
+                descTxt.entries[entry].duration_ms += FpsToMs(descTxt.hdr.fps);
+                anim_total_ms += FpsToMs(descTxt.hdr.fps) * (descTxt.entries[entry].count > 0 ? descTxt.entries[entry].count : 1);
             }
         }
-	}
+    }
 
     if (audio_present) {
-       audio->GetAudioDuration(&audio_total_ms);
-	}
+        audio->GetAudioDuration(&audio_total_ms);
+    }
 
-	printf("anim: %dms, audio: %dms\n", anim_total_ms, audio_total_ms);
+    printf("anim: %dms, audio: %dms\n", anim_total_ms, audio_total_ms);
 
     //parse entries
     for (int entry = 0; entry < descTxt.entries.size(); entry++) {
         DescEntry& e = descTxt.entries[entry];
-		int x = 0, y = 0;
+        int x = 0, y = 0;
         int loop_times_parsed = 0;
-		int total_loop_times = e.count;
+        int total_loop_times = e.count;
         //parse an image
-		//find every filename that starts with e.path
+        //find every filename that starts with e.path
         std::string prefix = e.path + "/";
 
         if (total_loop_times > 0)
         {
             for (int l = 0; l < total_loop_times; l++)
             {
-                ParseEntry(prefix, video, e.bkg_color);
+                ParseEntry(prefix, video, e.bkg_color, e.pause);
                 anim_curr_ms += e.duration_ms;
-			}
+            }
         }
         else
         {
-			int max_dur = MAX(anim_total_ms, audio_total_ms);
+            int max_dur = MAX(anim_total_ms, audio_total_ms);
             while (anim_curr_ms < max_dur)
             {
-                ParseEntry(prefix, video, e.bkg_color);
+                ParseEntry(prefix, video, e.bkg_color, e.pause);
                 anim_curr_ms += e.duration_ms;
             }
         }
@@ -731,7 +749,7 @@ void ParseAnimation()
     video->Close();
     delete[] rgb_buffer;
     rgb_buffer = NULL;
-	rgb_buffer_size = 0;
+    rgb_buffer_size = 0;
 }
 
 int main(int argc, char* argv[])
