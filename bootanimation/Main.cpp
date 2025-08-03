@@ -587,15 +587,6 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                             dyn_colors[2] = mixColors(descTxt.dyncol_start_colors[2], descTxt.dyncol_end_colors[2], dyn_percentage);
                             dyn_colors[3] = mixColors(descTxt.dyncol_start_colors[3], descTxt.dyncol_end_colors[3], dyn_percentage);
 
-                            if (curr_frame == descTxt.dyncol_end)
-                            {
-                                for (int m = 0; m < 4; m++)
-                                {
-                                    printf("#%02x%02x%02x ", dyn_colors[m].R, dyn_colors[m].G, dyn_colors[m].B);
-                                }
-                                printf("in full\n");
-                            }
-
                             //apply dynamic coloring
                             ApplyDynamic(dec_buffer, dec_buffer_dcol, dyn_colors[0], dyn_colors[1], dyn_colors[2], dyn_colors[3],
                                 image.columns(), image.rows());
