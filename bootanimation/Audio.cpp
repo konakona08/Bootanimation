@@ -86,8 +86,8 @@ void Audio::ExtractInfo(int* pnSampleRate, uint64_t *pnSamples, int* pnChannels)
 bool Audio::Convert(void)
 {
 	ma_uint64 frameRead = 0;
-	pAudioBuffer = (int16_t*)malloc((llFrameCount * OUT_SAMPLE_RATE / stDecoder.outputSampleRate) * nChannels * sizeof(int16_t) + (128*1024));//add 128k as boundary
-	memset(pAudioBuffer, 0, (llFrameCount * OUT_SAMPLE_RATE / stDecoder.outputSampleRate) * nChannels * sizeof(int16_t) + (128 * 1024));
+	pAudioBuffer = (int16_t*)malloc((llFrameCount * OUT_SAMPLE_RATE / stDecoder.outputSampleRate) * nChannels * sizeof(int16_t) + (256 * 1024));//add 256k as boundary
+	memset(pAudioBuffer, 0, (llFrameCount * OUT_SAMPLE_RATE / stDecoder.outputSampleRate) * nChannels * sizeof(int16_t) + (256 * 1024));
 	AUDIO_ASSERT(ma_decoder_read_pcm_frames(&stDecoder, pAudioBuffer, llFrameCount, &frameRead) == MA_SUCCESS, "Failed to read PCM frames", false);
 	return true;
 }
