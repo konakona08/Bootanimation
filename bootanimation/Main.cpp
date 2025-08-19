@@ -609,13 +609,24 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                             if (image.type() == PaletteType || image.type() == PaletteAlphaType
                                 || image.type() == GrayscaleAlphaType || image.type() == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
                                 rgb_multi = 4;
+                            else if (image.type() == GrayscaleType)
+                                rgb_multi = 2;
                             //get data
                             const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
                             for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
                                 for (unsigned int i1 = 0; i1 < 2; i1++) {
-                                    dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
-                                    dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
-                                    dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
+                                    if (rgb_multi == 2)
+                                    {
+                                        dec_buffer[rgb_buffer_size] = pixelsArr[i] * 255 / QuantumRange;
+                                        dec_buffer[rgb_buffer_size + 1] = pixelsArr[i] * 255 / QuantumRange;
+                                        dec_buffer[rgb_buffer_size + 2] = pixelsArr[i] * 255 / QuantumRange;
+                                    }
+                                    else
+                                    {
+                                        dec_buffer[rgb_buffer_size] = pixelsArr[i + 0] * 255 / QuantumRange;
+                                        dec_buffer[rgb_buffer_size + 1] = pixelsArr[i + 1] * 255 / QuantumRange;
+                                        dec_buffer[rgb_buffer_size + 2] = pixelsArr[i + 2] * 255 / QuantumRange;
+                                    }
                                 }
                                 rgb_buffer_size += 3;
                             }
