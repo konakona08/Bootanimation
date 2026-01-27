@@ -677,6 +677,11 @@ void ParseAnimation()
     rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 3;
 
     Video* video = new Video();
+    //Note that odd wdt and hgt will cause an init hdl fail (e.g. odd width of bootanimation in VNPT MyTV)
+    if (descTxt.hdr.width % 2 == 1)
+		descTxt.hdr.width += 1;
+    if (descTxt.hdr.height % 2 == 1)
+		descTxt.hdr.height += 1;
     video->SetParams(descTxt.hdr.width, descTxt.hdr.height, descTxt.hdr.fps);
     if (audio_present) {
         video->SetParamsAudio(audio_sample_rate, samples_per_frame, audio_channels);
