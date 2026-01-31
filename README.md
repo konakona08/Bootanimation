@@ -65,4 +65,6 @@ Its dependencies are under the following licenses:
 
 7. zlib (modified for Visual Studio building) - [MIT License](LICENSE.ZLIBWIN), [ZLIB license](LICENSE.ZLIB)
 
-8. L-SMASH (modified to build under VIsual Studio 2022) - [ISC](LICENSE.LSMASH)
+8. L-SMASH (modified to build under Visual Studio 2022) - [ISC](LICENSE.LSMASH)
+
+9. AVIR - [MIT License](LICENSE.AVIR)

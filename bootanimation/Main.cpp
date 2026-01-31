@@ -6,6 +6,7 @@
 #include "Audio.h"
 #include "zip.h"
 #include <Magick++.h>
+#include "../deps/avir/avir.h"
 
 using namespace Magick;
 
@@ -14,6 +15,8 @@ int audio_sample_rate = 0;
 int audio_channels = 0;
 uint64_t audio_samples = 0;
 int16_t* audio_buffer = nullptr;
+int c_width = -1;
+int c_height = -1;
 
 #define ANIM_PATH_MAX 255
 #define STR(x)   #x
@@ -93,6 +96,8 @@ int re = 0, ge = 0, be = 0;
 float dyn_percentage = 0;
 
 uint32_t audio_total_ms = 0;
+
+avir::CImageResizer<> ImageResizer(8);
 
 int FpsToMs(int fps)
 {
@@ -368,6 +373,9 @@ void ExtractDescTxt()
             continue;
         }
         int topLineNumbers = sscanf(l, "%d %d %d %d", &width, &height, &fps, &progress);
+        //Fix for custom resolutions (E-BODA Izzycomm Z700)
+		if (c_width != -1) width = c_width;
+		if (c_height != -1) height = c_height;
         if (topLineNumbers == 3 || topLineNumbers == 4) {
 			printf("> width=%d, height=%d, fps=%d, progress=%d\n", width, height, fps, progress);
 			descTxt.hdr.width = width;
@@ -465,9 +473,12 @@ void PasteImage(uint8_t* pRGB, uint8_t* pInRGB, int x, int y, int w, int h)
         for (int i = 0; i < w; i++) {
             int srcIndex = (j * w + i) * 3;
             int destIndex = ((y + j) * descTxt.hdr.width + (x + i)) * 3;
-            pRGB[destIndex] = pInRGB[srcIndex];
-            pRGB[destIndex + 1] = pInRGB[srcIndex + 1];
-            pRGB[destIndex + 2] = pInRGB[srcIndex + 2];
+            if (destIndex >= 0)
+            {
+                pRGB[destIndex] = pInRGB[srcIndex];
+                pRGB[destIndex + 1] = pInRGB[srcIndex + 1];
+                pRGB[destIndex + 2] = pInRGB[srcIndex + 2];
+            }
         }
 	}
 }
@@ -630,14 +641,31 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                                 }
                                 rgb_buffer_size += 3;
                             }
-
+                            if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows())
+                            {
+                                avir::CImageResizerVars Vars;
+                                Vars.UseSRGBGamma = true;
+                                char* dec_resize_buffer = new char[descTxt.hdr.width * descTxt.hdr.height * 4];
+                                ImageResizer.resizeImage(dec_buffer, image.columns(), image.rows(), 0, dec_resize_buffer, descTxt.hdr.width, descTxt.hdr.height, 4, 0);
+                                delete[] dec_buffer;
+                                dec_buffer = (uint8_t*)dec_resize_buffer;
+                                rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 3;
+                            }
+                            //Currently the positioning for center can only be done for non-trim
                             if (hasTrim)
                             {
+                                if (c_width != 1 || c_height != 1)
+                                {
+									printf("Skipping re-positioning for trimmed image %s\n", zipEntry.c_str());
+                                }
                                 PasteImage(a, dec_buffer, pos[curr_frame].x, pos[curr_frame].y, pos[curr_frame].w, pos[curr_frame].h);
                             }
                             else
                             {
-                                PasteImage(a, dec_buffer, 0, 0, image.columns(), image.rows());
+                                if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows())
+                                    PasteImage(a, dec_buffer, 0, 0, descTxt.hdr.width, descTxt.hdr.height);
+                                else
+                                    PasteImage(a, dec_buffer, 0, 0, image.columns(), image.rows());
                             }
                             delete[] dec_buffer;
                         }
@@ -766,11 +794,13 @@ int main(int argc, char* argv[])
     InitializeMagick(argv[0]);
 
     if (argc < 3) {
-		printf("Usage: %s -anim <zipfile> [-audio <audiofile>] [-out <outputfile>] [-dynamic <color1> <color2> <color3> <color4>]\n", argv[0]);
+		printf("Usage: %s -anim <zipfile> [-audio <audiofile>] [-out <outputfile>] [-dynamic <color1> <color2> <color3> <color4>] [-width <w>] [-height <h>]\n", argv[0]);
         printf("-anim: Path to animation zip file\n");
         printf("-audio: Path to audio file played in animation.zip\n");
         printf("-dynamic: R G B and A mask colors to apply during and end of dynamic color change\n");
         printf("-out: Output file path(by default it would be <current cmd path>\bootanimation.mp4)\n");
+        printf("-width: Width of the output video\n");
+        printf("-height: Height of the output video\n");
         return 1;
 	}
 
@@ -799,6 +829,13 @@ int main(int argc, char* argv[])
                 descTxt.dyncol_end_colors[m].B = (color_cvt & 0xFF);
             }
         }
+        //Fix for custom resolutions (E-BODA Izzycomm Z700)
+        else if (strcmp(argv[i], "-width") == 0 && i + 1 < argc) {
+            c_width = atoi(argv[++i]);
+        }
+        else if (strcmp(argv[i], "-height") == 0 && i + 1 < argc) {
+            c_height = atoi(argv[++i]);
+		}
 	}
 
     if (audio_present)

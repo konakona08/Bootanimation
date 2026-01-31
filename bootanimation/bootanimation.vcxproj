@@ -24,6 +24,13 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Video.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\deps\avir\avir.h" />
+    <ClInclude Include="..\deps\avir\avir_dil.h" />
+    <ClInclude Include="..\deps\avir\avir_float4_sse.h" />
+    <ClInclude Include="..\deps\avir\avir_float8_avx.h" />
+    <ClInclude Include="..\deps\avir\lancir.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
