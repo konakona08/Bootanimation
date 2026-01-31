@@ -35,15 +35,6 @@
     <ClInclude Include="..\deps\avir\avir.h">
       <Filter>Header Files\AVIR</Filter>
     </ClInclude>
-    <ClInclude Include="..\deps\avir\avir_dil.h">
-      <Filter>Header Files\AVIR</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deps\avir\avir_float4_sse.h">
-      <Filter>Header Files\AVIR</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deps\avir\avir_float8_avx.h">
-      <Filter>Header Files\AVIR</Filter>
-    </ClInclude>
     <ClInclude Include="..\deps\avir\lancir.h">
       <Filter>Header Files\AVIR</Filter>
     </ClInclude>

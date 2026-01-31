@@ -7,6 +7,7 @@
 #include "zip.h"
 #include <Magick++.h>
 #include "../deps/avir/avir.h"
+#include "../deps/avir/avir_dil.h"
 
 using namespace Magick;
 
@@ -615,14 +616,24 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                         }
                         else
                         {
-                            dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
-                            dec_buffer_size = image.columns() * image.rows() * 4;
+							int old_w = image.columns();
+							int old_h = image.rows();
                             if (image.type() == PaletteType || image.type() == PaletteAlphaType
                                 || image.type() == GrayscaleAlphaType || image.type() == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
                                 rgb_multi = 4;
                             else if (image.type() == GrayscaleType)
                                 rgb_multi = 2;
                             //get data
+                            //Due to a problem with imageresizer from avir (does not scale low-resolution to high properly),
+                            //we need to scale it from ImageMagick then scale it by avir
+                            if (descTxt.hdr.width > image.columns() || descTxt.hdr.height > image.rows())
+                            {
+                                image.filterType(LanczosFilter);
+                                image.zoom(Magick::Geometry(descTxt.hdr.width, descTxt.hdr.height));
+                                printf("Resize required for small image, original size: %dx%d, target size: %dx%d\n", old_w, old_h, image.columns(), image.rows());
+                            }
+                            dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
+                            dec_buffer_size = image.columns() * image.rows() * 4;
                             const MagickCore::Quantum* pixelsArr = image.getConstPixels(0, 0, image.columns(), image.rows());
                             for (unsigned int i = 0; i < image.columns() * image.rows() * rgb_multi; i += rgb_multi) {
                                 for (unsigned int i1 = 0; i1 < 2; i1++) {
@@ -643,13 +654,12 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                             }
                             if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows())
                             {
-                                avir::CImageResizerVars Vars;
-                                Vars.UseSRGBGamma = true;
                                 char* dec_resize_buffer = new char[descTxt.hdr.width * descTxt.hdr.height * 4];
-                                ImageResizer.resizeImage(dec_buffer, image.columns(), image.rows(), 0, dec_resize_buffer, descTxt.hdr.width, descTxt.hdr.height, 4, 0);
+                                ImageResizer.resizeImage(dec_buffer, image.columns(), image.rows(), 0,
+                                                         dec_resize_buffer, descTxt.hdr.width, descTxt.hdr.height, 4, 0);
                                 delete[] dec_buffer;
                                 dec_buffer = (uint8_t*)dec_resize_buffer;
-                                rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 3;
+                                rgb_buffer_size = descTxt.hdr.width * descTxt.hdr.height * 4;
                             }
                             //Currently the positioning for center can only be done for non-trim
                             if (hasTrim)
