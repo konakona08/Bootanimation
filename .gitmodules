@@ -16,3 +16,6 @@
 [submodule "deps/l-smash"]
 	path = deps/l-smash
 	url = https://github.com/raulmrio28-git/l-smash.git
+[submodule "deps/avir"]
+	path = deps/avir
+	url = https://github.com/avaneev/avir.git
