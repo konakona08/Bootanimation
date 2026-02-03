@@ -618,10 +618,10 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                         {
 							int old_w = image.columns();
 							int old_h = image.rows();
-                            if (image.type() == PaletteType || image.type() == PaletteAlphaType
-                                || image.type() == GrayscaleAlphaType || image.type() == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
+                            int img_type = image.type();
+                            if (img_type == PaletteAlphaType || img_type == GrayscaleAlphaType || img_type == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
                                 rgb_multi = 4;
-                            else if (image.type() == GrayscaleType)
+                            else if (img_type == GrayscaleType)
                                 rgb_multi = 2;
                             //get data
                             //Due to a problem with imageresizer from avir (does not scale low-resolution to high properly),
