@@ -472,9 +472,12 @@ void ExtractDescTxt()
 void PasteImage(uint8_t* pRGB, uint8_t* pInRGB, int x, int y, int w, int h)
 {
 	//paste img at x,y to pRGB
-    if (x < 0 || y < 0 || x + w > descTxt.hdr.width || y + h > descTxt.hdr.height) {
-        printf("Invalid paste position (%d, %d) with size (%d, %d)\n", x, y, w, h);
-        return;
+    if (y < 0)
+    {
+        int offset = -y;
+        pInRGB += offset * w * 3;
+        h -= offset;
+		y = 0;
     }
     for (int j = 0; j < h; j++) {
         for (int i = 0; i < w; i++) {
@@ -693,7 +696,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                                 }
                                 rgb_buffer_size += 3;
                             }
-                            if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows())
+                            if (descTxt.hdr.width != image.columns())
                             {
                                 char* dec_resize_buffer = new char[descTxt.hdr.width * descTxt.hdr.height * 4];
                                 ImageResizer.resizeImage(dec_buffer, image.columns(), image.rows(), 0,
@@ -714,7 +717,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                             else
                             {
                                 if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows())
-                                    PasteImage(a, dec_buffer, 0, 0, descTxt.hdr.width, descTxt.hdr.height);
+                                    PasteImage(a, dec_buffer, (descTxt.hdr.width - image.columns()) / 2, 0, descTxt.hdr.width, descTxt.hdr.height);
                                 else
                                     PasteImage(a, dec_buffer, 0, 0, image.columns(), image.rows());
                             }
