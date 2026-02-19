@@ -677,7 +677,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                                 image.zoom(Magick::Geometry(descTxt.hdr.width, descTxt.hdr.height));
                                 printf("Resize required for small image, original size: %dx%d, target size: %dx%d\n", old_w, old_h, image.columns(), image.rows());
                             }
-                            dec_buffer = new uint8_t[image.columns() * image.rows() * 8];
+                            dec_buffer = new uint8_t[image.columns() * image.rows() * 4];
                             dec_buffer_size = image.columns() * image.rows() * 4;
                             for (unsigned int j = 0; j < image.rows(); j++)
                             {
@@ -701,7 +701,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                                 }
                             }
                             //FIXME: Some animations' frames are resized improperly
-                            if (descTxt.hdr.width != image.columns())
+                            if (descTxt.hdr.width != image.columns() || descTxt.hdr.height != image.rows''())
                             {
                                 char* dec_resize_buffer = new char[descTxt.hdr.width * descTxt.hdr.height * 4];
                                 ImageResizer.resizeImage(dec_buffer, image.columns(), image.rows(), 0,
