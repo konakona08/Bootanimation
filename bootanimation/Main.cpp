@@ -696,6 +696,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
                                 }
                                 rgb_buffer_size += 3;
                             }
+                            //FIXME: Some animations' frames are resized improperly
                             if (descTxt.hdr.width != image.columns())
                             {
                                 char* dec_resize_buffer = new char[descTxt.hdr.width * descTxt.hdr.height * 4];
