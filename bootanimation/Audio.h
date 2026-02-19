@@ -26,6 +26,7 @@ private:
 public:
 	Audio(void);
 	bool Open(std::string szFilename);
+	bool OpenMemory(unsigned char* pData, size_t dataSize);
 	void ExtractInfo(int* pnSampleRate, uint64_t* pnSamples, int* pnChannels);
 	bool Convert(void);
 	int16_t* GetAudioBuffer(void);

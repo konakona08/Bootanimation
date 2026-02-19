@@ -333,7 +333,7 @@ void ExtractDescTxt()
     zip_stat(zipArchive, "desc.txt", 0, &st);
 
     //Alloc memory for its uncompressed contents
-    char* contents = new char[st.size];
+    char* contents = new char[st.size+1];
 
     zip_file* f = zip_fopen(zipArchive, "desc.txt", 0);
     zip_fread(f, contents, st.size);
@@ -343,9 +343,14 @@ void ExtractDescTxt()
     std::string dynamicColoringPartName = "";
     bool postDynamicColoring = false;
     // Parse the description file
+    unsigned int bytes_read = 0;
     for (;;) {
+		//Fix parsing for some desc.txt files with no endline at the end of the file (TCL 40 SE)
+        if (bytes_read >= st.size)
+            break;
         const char* endl = strstr(s, "\n");
-        if (endl == nullptr) break;
+        if (endl == NULL)
+            endl = &contents[st.size];
         std::string line(s, endl - s);
         const char* l = line.c_str();
         int fps = 0;
@@ -373,6 +378,7 @@ void ExtractDescTxt()
             s = ++endl;
             continue;
         }
+        bytes_read += strlen(l) + 1;
         int topLineNumbers = sscanf(l, "%d %d %d %d", &width, &height, &fps, &progress);
         //Fix for custom resolutions (E-BODA Izzycomm Z700)
 		if (c_width != -1) width = c_width;
@@ -484,6 +490,41 @@ void PasteImage(uint8_t* pRGB, uint8_t* pInRGB, int x, int y, int w, int h)
 	}
 }
 
+void ParseAudio(std::string prefix)
+{
+    //parse audio if it exists (some carrier animations in TCL 40 SE)
+    if (audio_present == false)
+    {
+        for (const auto& zipEntry : zipEntries) {
+            if (zipEntry.find(prefix) == 0) {
+                if (zipEntry.find("audio.wav") != std::string::npos) {
+                    audio_present = true;
+                    uint8_t* file_data = NULL;
+                    zip_uint64_t file_size = 0;
+                    zip_stat_t st;
+                    zip_file* f = zip_fopen(zipArchive, zipEntry.c_str(), 0);
+                    if (!f) {
+                        printf("Failed to open file %s in zip\n", zipEntry.c_str());
+                        continue;
+                    }
+                    zip_stat(zipArchive, zipEntry.c_str(), 0, &st);
+                    file_size = st.size;
+                    file_data = new uint8_t[file_size];
+                    zip_fread(f, file_data, file_size);
+                    zip_fclose(f);
+                    audio->OpenMemory(file_data, file_size);
+                    audio->Convert();
+                    audio->ExtractInfo(&audio_sample_rate, &audio_samples, &audio_channels);
+                    audio_buffer = audio->GetAudioBuffer();
+                    audio_total_ms = (uint32_t)((audio_samples * 1000) / audio_sample_rate);
+                    free(file_data);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
 {
     std::vector<Position> pos;
@@ -496,14 +537,14 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
     //find last frame in the prefix
     for (const auto& zipEntry : zipEntries) {
         if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length()) {
-            if (zipEntry > last_frame && !(zipEntry.find(".txt") != std::string::npos)) {
+            if (zipEntry > last_frame && (!(zipEntry.find(".txt") != std::string::npos) && !(zipEntry.find(".wav") != std::string::npos))) {
                 last_frame = zipEntry;
             }
         }
     }
 
     for (const auto& zipEntry : zipEntries) {
-        if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length()) {
+        if (zipEntry.find(prefix) == 0 && zipEntry.length() > prefix.length() && zipEntry.find("audio.wav") == std::string::npos) {
 
             int times = 1 + ((zipEntry == last_frame) ? pause : 0);
 
@@ -619,7 +660,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
 							int old_w = image.columns();
 							int old_h = image.rows();
                             int img_type = image.type();
-                            if (img_type == PaletteAlphaType || img_type == GrayscaleAlphaType || img_type == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
+                            if (img_type == PaletteType || img_type == PaletteAlphaType || img_type == GrayscaleAlphaType || img_type == TrueColorAlphaType) //for some reason palette images (e.g. gif files) have alpha channel, change rgb multiplier to 4
                                 rgb_multi = 4;
                             else if (img_type == GrayscaleType)
                                 rgb_multi = 2;
@@ -691,7 +732,7 @@ void ParseEntry(std::string prefix, Video* video, RGBColor bkg, int pause)
 
                     }
                     catch (Exception& e) {
-                        std::cerr << "Error processing image: " << e.what() << std::endl;
+                        std::cerr << "Error processing image " << zipEntry.c_str() << ": " << e.what() << std::endl;
                     }
                 }
                 curr_frame++;
@@ -705,8 +746,8 @@ void ParseAnimation()
 {
     uint8_t* rgb_buffer = NULL;
     int rgb_buffer_size = 0;
-    int16_t* audioData = audio_buffer;
-    int samples = audio_samples;
+    int16_t* audioData;
+    int samples;
     int samples_per_frame = 1024;
     uint32_t anim_total_ms = 0;
     uint32_t anim_curr_ms = 0;
@@ -721,15 +762,9 @@ void ParseAnimation()
     if (descTxt.hdr.height % 2 == 1)
 		descTxt.hdr.height += 1;
     video->SetParams(descTxt.hdr.width, descTxt.hdr.height, descTxt.hdr.fps);
-    if (audio_present) {
-        video->SetParamsAudio(audio_sample_rate, samples_per_frame, audio_channels);
-    }
     video->Open(outFileName);
     video->Start();
     video->CreateVideoTrack();
-    if (audio_present) {
-        video->CreateAudioTrack();
-    }
 
     for (int entry = 0; entry < descTxt.entries.size(); entry++) {
         DescEntry& e = descTxt.entries[entry];
@@ -740,8 +775,12 @@ void ParseAnimation()
                 if (zipEntry.substr(zipEntry.length() - 4) == ".txt") {
                     continue; // skip desc.txt files
                 }
+                if (zipEntry.substr(zipEntry.length() - 4) == ".wav") {
+                    continue; // skip audio.wav files
+                }
                 descTxt.entries[entry].duration_ms += FpsToMs(descTxt.hdr.fps);
                 anim_total_ms += FpsToMs(descTxt.hdr.fps) * (descTxt.entries[entry].count > 0 ? descTxt.entries[entry].count : 1);
+                ParseAudio(prefix);
             }
         }
     }
@@ -782,7 +821,11 @@ void ParseAnimation()
     }
     video->AddFrame();
     //finish audio add
+    samples = audio_samples;
+    audioData = audio_buffer;
     if (audio_present) {
+        video->SetParamsAudio(audio_sample_rate, samples_per_frame, audio_channels);
+        video->CreateAudioTrack();
         while (samples > 0) {
             video->AddAudio(audioData, samples_per_frame);
             audioData += samples_per_frame * audio_channels;

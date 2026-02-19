@@ -75,6 +75,19 @@ bool Audio::Open(std::string szFilename)
     return true;
 }
 
+bool Audio::OpenMemory(unsigned char* pData, size_t dataSize)
+{
+	stConfig = ma_decoder_config_init(ma_format_s16, 0, 0);
+
+	AUDIO_ASSERT(ma_decoder_init_memory(pData, dataSize, &stConfig, &stDecoder) == MA_SUCCESS, "fail open audio", false);
+	AUDIO_ASSERT(ma_data_source_get_length_in_pcm_frames(&stDecoder, &llFrameCount) == MA_SUCCESS, "Failed to get length", false);
+
+	nChannels = stDecoder.outputChannels;
+	nSampleRate = stDecoder.outputSampleRate;
+
+	return true;
+}
+
 void Audio::ExtractInfo(int* pnSampleRate, uint64_t *pnSamples, int* pnChannels)
 {
 	AUDIO_ASSERT(pnSampleRate != nullptr && pnChannels != nullptr && pnSamples != NULL, "Invalid pointers", );
