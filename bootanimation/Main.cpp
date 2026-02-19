@@ -334,6 +334,7 @@ void ExtractDescTxt()
 
     //Alloc memory for its uncompressed contents
     char* contents = new char[st.size+1];
+    memset(contents, 0xa, st.size + 1); //false endlines
 
     zip_file* f = zip_fopen(zipArchive, "desc.txt", 0);
     zip_fread(f, contents, st.size);
@@ -346,7 +347,7 @@ void ExtractDescTxt()
     unsigned int bytes_read = 0;
     for (;;) {
 		//Fix parsing for some desc.txt files with no endline at the end of the file (TCL 40 SE)
-        if (bytes_read >= st.size)
+        if (bytes_read >= st.size-1)
             break;
         const char* endl = strstr(s, "\n");
         if (endl == NULL)
